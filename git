@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Define a function to save the branch state
+save_branch_state() {
+  branch_name=$(git symbolic-ref --short HEAD)
+
+  # Save the stash if there are any changes
+  if ! git diff-index --quiet HEAD; then
+    git stash save "branch state for $branch_name"
+  fi
+}
+
+# Define a function to restore the branch state
+restore_branch_state() {
+  branch_name=$(git symbolic-ref --short HEAD)
+
+  # Restore the branch state from the stash
+  stash_msg="branch state for $branch_name"
+  if git stash list | grep -q "$stash_msg"; then
+    stash_id=$(git stash list --max-count=1 --grep "$stash_msg" | cut -d':' -f1)
+    git stash apply "$stash_id"
+    git stash drop "$stash_id"
+  fi
+}
+
+# Override the `git` command with a custom implementation
+git() {
+  case "$1" in
+    checkout|co|switch)
+      save_branch_state
+      command git "$@"
+      restore_branch_state
+      ;;
+    merge)
+      restore_branch_state
+      command git "$@"
+      ;;
+    *)
+      command git "$@"
+      ;;
+  esac
+}
+
+git "$@"
