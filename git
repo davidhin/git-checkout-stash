@@ -17,7 +17,7 @@ restore_branch_state() {
   # Restore the branch state from the stash
   stash_msg="branch state for $branch_name"
   if git stash list | grep -q "$stash_msg"; then
-    stash_id=$(git stash list --max-count=1 --grep "$stash_msg" | cut -d':' -f1)
+    stash_id=$(git stash list --max-count=1 --grep "$stash_msg\$" | cut -d':' -f1)
     git stash apply "$stash_id"
     git stash drop "$stash_id"
   fi
