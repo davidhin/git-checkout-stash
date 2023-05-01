@@ -6,7 +6,7 @@ save_branch_state() {
 
   # Save the stash if there are any changes
   if ! git diff-index --quiet HEAD; then
-    git stash save "branch state for $branch_name"
+    git stash save -u "branch state for $branch_name"
   fi
 }
 
