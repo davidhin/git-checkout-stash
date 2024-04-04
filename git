@@ -23,39 +23,27 @@ restore_branch_state() {
   fi
 }
 
-is_remote_branch() {
-  local branch_name="$1"
-  # Replace 'origin' with your remote name if it's different
-  if git ls-remote --heads origin | grep -q "refs/heads/$branch_name\$"; then
-    return 0 # It's a remote branch
-  else
-    return 1 # Not a remote branch
-  fi
-}
-
 # Override the `git` command with a custom implementation
 git() {
   case "$1" in
     checkout|co|switch)
-      local file_checkout=true
-      # Check if any of the arguments is a remote branch. If so, it's not a file checkout.
+      local file_checkout=false
       for arg in "${@:2}"; do
-        if is_remote_branch "$arg"; then
-          file_checkout=false
+        if [[ -f $arg ]]; then
+          file_checkout=true
           break
         fi
       done
 
       if [[ $file_checkout == true ]]; then
-        # It's a file checkout, execute the original git command and exit
+        # This is a file checkout, execute the original git command and exit
         command git "$@"
         return
-      else
-        # Assume it's a branch operation
-        save_branch_state
-        command git "$@"
-        restore_branch_state
       fi
+
+      save_branch_state
+      command git "$@"
+      restore_branch_state
       ;;
     merge)
       restore_branch_state
